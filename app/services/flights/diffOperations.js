@@ -1,5 +1,6 @@
 import { put, take, call } from 'redux-saga/effects'
 import {builder} from '../../operations/opsSaga'
+import {uuid} from '../../operations/helpers'
 
 export const OPERATIONS = {
 	FLIGHT_EDITION: {
@@ -56,33 +57,44 @@ export function * flightEditionOperation (action) {
 	const {FLIGHT_EDITION} = OPERATIONS
 	const {steps} = FLIGHT_EDITION
 	const {shiftId} = action.payload
+	const id = uuid()
 	const operation = {
 		start: () => put({
 			type: 'start_operation',
-			payload: {operation: FLIGHT_EDITION.name, step: steps.INITIAL, state: {shiftId}, context: []},
+			payload: {operation: FLIGHT_EDITION.name, id, step: steps.INITIAL, state: {shiftId}, context: []},
 		}),
 		failure: (error) =>
-			put({type: 'failure_operation', payload: {context: [], operation: FLIGHT_EDITION.name, error}}),
-		updateState: (step, payload = {}) => put(builder(FLIGHT_EDITION.name, [])(step, payload)),
+			put({type: 'failure_operation', payload: {id, context: [], operation: FLIGHT_EDITION.name, error}}),
+		updateState: (step, payload = {}) => put(builder(FLIGHT_EDITION.name, [])(id, step, payload)),
+		getStep: step => `${step}_${id}`,
 	}
-	yield call(flightEdition, {name: FLIGHT_EDITION.name, steps, operation})
+	yield call(flightEdition, {id, name: FLIGHT_EDITION.name, steps, operation})
 }
 
 export function * mealSelectionOperation (context) {
 	const {SELECT_FLIGHT_MEAL} = OPERATIONS
 	const {steps} = SELECT_FLIGHT_MEAL
 	const name = SELECT_FLIGHT_MEAL.name
+	const id = uuid()
+	const getStep = step => `${step}_${id}`
 	const operation = {
 		start: () => put({
 			type: 'start_operation',
-			payload: {operation: name, step: steps.INITIAL, state: {}, context},
+			payload: {
+				operation: name,
+				id,
+				step: steps.INITIAL,
+				state: {},
+				context,
+			},
 		}),
 		success: () => put({
-			type: 'success_operation', payload: {context, operation: name},
+			type: 'success_operation', payload: {id, context, operation: name},
 		}),
 		failure: (error) =>
-			put({type: 'failure_operation', payload: {context, operation: name, error}}),
-		updateState: (step, payload = {}) => put(builder(name, context)(step, payload)),
+			put({type: 'failure_operation', payload: {id, context, operation: name, error}}),
+		updateState: (step, payload = {}) => put(builder(name, context)(id, step, payload)),
+		getStep,
 	}
 	yield call(mealSelection, {name: name, steps, operation, context})
 }
@@ -91,6 +103,7 @@ export function * dateEditionOperation (context) {
 	const {EDIT_FLIGHT_DATE} = OPERATIONS
 	const {steps} = EDIT_FLIGHT_DATE
 	const name = EDIT_FLIGHT_DATE.name
+	const id = uuid()
 	const operation = {
 		start: () => put({
 			type: 'start_operation',
@@ -99,13 +112,14 @@ export function * dateEditionOperation (context) {
 		failure: (error) =>
 			put({type: 'failure_operation', payload: {context, operation: name, error}}),
 		updateState: (step, payload = {}) => put(builder(name, context)(step, payload)),
+		getStep: step => `${step}_${id}`,
 	}
 	yield call(dateEdition, {name: name, steps, operation, context})
 }
 
 // ------------------------------------ SAGAS ----------------------------------------------------
 
-function * flightEdition ({name, steps, operation}) {
+function * flightEdition ({id, name, steps, operation}) {
 	const userDecisionOption = steps.EDIT_FLIGHT_DECISION
 	yield operation.start()
 	const flights = yield call(FlightService.getFlights)
@@ -114,17 +128,18 @@ function * flightEdition ({name, steps, operation}) {
 	}
 
 	yield operation.updateState(steps.SELECT_FLIGHT, {flights: flights.res})
-	yield take(steps.SELECT_FLIGHT)
+	yield take(operation.getStep(steps.SELECT_FLIGHT))
 	yield operation.updateState(steps.SELECT_OPERATION)
 
 	while (true) {
-		const decision = yield take(Object.keys(userDecisionOption))
-		yield operation.updateState(decision.type)
-		if (decision.type === userDecisionOption.EDIT_FLIGHT_DATE_OPERATION) {
-			yield call(dateEditionOperation, [name])
+		const decision = yield take(Object.keys(userDecisionOption).map(s => operation.getStep(s)))
+		if (decision.type === operation.getStep(userDecisionOption.EDIT_FLIGHT_DATE_OPERATION)) {
+			yield operation.updateState(userDecisionOption.EDIT_FLIGHT_DATE_OPERATION)
+			yield call(dateEditionOperation, [id])
 		}
-		if (decision.type === userDecisionOption.SELECT_FLIGHT_MEAL_OPERATION) {
-			yield call(mealSelectionOperation, [name])
+		if (decision.type === operation.getStep(userDecisionOption.SELECT_FLIGHT_MEAL_OPERATION)) {
+			yield operation.updateState(userDecisionOption.SELECT_FLIGHT_MEAL_OPERATION)
+			yield call(mealSelectionOperation, [id])
 		}
 		yield operation.updateState(steps.SELECT_OPERATION)
 	}
@@ -134,15 +149,15 @@ function * mealSelection ({steps, operation, name, context}) {
 	try {
 		yield operation.start()
 		yield operation.updateState(steps.SELECT_FLIGHT_MEAL)
-		yield take(steps.SELECT_FLIGHT_MEAL)
+		yield take(operation.getStep(steps.SELECT_FLIGHT_MEAL))
 		yield operation.updateState(steps.SELECT_FLIGHT_MEAL_CONFIRMATION)
-		yield take(steps.SELECT_FLIGHT_MEAL_CONFIRMATION)
+		yield take(operation.getStep(steps.SELECT_FLIGHT_MEAL_CONFIRMATION))
 		yield operation.success()
-		yield take(steps.SELECT_FLIGHT_MEAL_SUCCESS_HANDLED)
+		yield take(operation.getStep(steps.SELECT_FLIGHT_MEAL_SUCCESS_HANDLED))
 		return yield put({type: 'clean_success_operation', payload: {context, operation: name}})
 } catch (error) {
 		yield operation.failure({error: 'UNHANDLED ERROR !!!!'})
-		yield take(steps.SELECT_FLIGHT_MEAL_FAILURE_HANDLED)
+		yield take(operation.getStep(steps.SELECT_FLIGHT_MEAL_FAILURE_HANDLED))
 		return yield put({type: 'clean_failure_operation', payload: {context, operation: name}})
 	}
 }
@@ -151,15 +166,15 @@ function * dateEdition ({operation, steps, context, name}) {
 	try {
 		yield operation.start()
 		yield operation.updateState(steps.SELECT_NEW_DATE)
-		yield take(steps.SELECT_NEW_DATE)
+		yield take(operation.getStep(steps.SELECT_NEW_DATE))
 		yield operation.updateState(steps.EDITION_CONFIRMATION)
-		yield take(steps.EDITION_CONFIRMATION)
+		yield take(operation.getStep(steps.EDITION_CONFIRMATION))
 		yield operation.success()
-		yield take(steps.EDIT_FLIGHT_DATE_SUCCESS_HANDLED)
+		yield take(operation.getStep(steps.EDIT_FLIGHT_DATE_SUCCESS_HANDLED))
 		return yield put({type: 'clean_success_operation', payload: {context, operation: name}})
 	} catch (error) {
 		yield operation.failure({error: 'UNHANDLED ERROR !!!!'})
-		yield take(steps.EDIT_FLIGHT_DATE_FAILURE_HANDLED)
+		yield take(operation.getStep(steps.EDIT_FLIGHT_DATE_FAILURE_HANDLED))
 		return yield put({type: 'clean_failure_operation', payload: {context, operation: name}})
 	}
 }

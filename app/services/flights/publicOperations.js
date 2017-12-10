@@ -1,5 +1,5 @@
 import { bookFlight, OPERATIONS } from './sagas'
-import { takeLatest } from 'redux-saga/effects'
+import { takeEvery, takeLatest } from 'redux-saga/effects'
 import { operationFLow } from '../../operations/opsSaga'
 import {flightEditionOperation} from './diffOperations'
 
@@ -11,7 +11,7 @@ export function * bookFlightOperation () {
 function* publicSagas () {
 	yield [
 		takeLatest(OPERATIONS.BOOK_FLIGHT.name, bookFlightOperation),
-		takeLatest(OPERATIONS.FLIGHT_EDITION.name, flightEditionOperation),
+		takeEvery(OPERATIONS.FLIGHT_EDITION.name, flightEditionOperation),
 	]
 }
 
