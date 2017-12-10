@@ -15,10 +15,6 @@ export const OPERATIONS = {
 		},
 		actions: {
 			cancel: 'FLIGHT_EDITION_CANCEL',
-			success: 'FLIGHT_EDITION_SUCCESS',
-			failure: 'FLIGHT_EDITION_FAILURE',
-			successHandled: 'FLIGHT_EDITION_SUCCESS_HANDLED',
-			failureHandled: 'FLIGHT_EDITION_FAILURE_HANDLED',
 		},
 	},
 	EDIT_FLIGHT_DATE: {
@@ -27,13 +23,11 @@ export const OPERATIONS = {
 			INITIAL: 'INITIAL',
 			SELECT_NEW_DATE: 'SELECT_NEW_DATE',
 			EDIT_DATE_CONFIRMATION: 'EDIT_FLIGHT_DATE_CONFIRMATION',
+			EDIT_FLIGHT_DATE_SUCCESS_HANDLED: 'EDIT_FLIGHT_DATE_SUCCESS_HANDLED',
+			EDIT_FLIGHT_DATE_FAILURE_HANDLED: 'EDIT_FLIGHT_DATE_FAILURE_HANDLED',
 		},
 		actions: {
 			cancel: 'EDIT_FLIGHT_DATE_CANCEL',
-			success: 'EDIT_FLIGHT_DATE_SUCCESS',
-			failure: 'EDIT_FLIGHT_DATE_FAILURE',
-			successHandled: 'EDIT_FLIGHT_DATE_SUCCESS_HANDLED',
-			failureHandled: 'EDIT_FLIGHT_DATE_FAILURE_HANDLED',
 		},
 	},
 	SELECT_FLIGHT_MEAL: {
@@ -42,13 +36,11 @@ export const OPERATIONS = {
 			INITIAL: 'INITIAL',
 			SELECT_FLIGHT_MEAL: 'SELECT_FLIGHT_MEAL',
 			SELECT_FLIGHT_MEAL_CONFIRMATION: 'SELECT_FLIGHT_MEAL_CONFIRMATION',
+			SELECT_FLIGHT_MEAL_SUCCESS_HANDLED: 'SELECT_FLIGHT_MEAL_SUCCESS_HANDLED',
+			SELECT_FLIGHT_MEAL_FAILURE_HANDLED: 'SELECT_FLIGHT_MEAL_FAILURE_HANDLED',
 		},
 		actions: {
 			cancel: 'SELECT_FLIGHT_MEAL_CANCEL',
-			success: 'SELECT_FLIGHT_MEAL_SUCCESS',
-			failure: 'SELECT_FLIGHT_MEAL_FAILURE',
-			successHandled: 'SELECT_FLIGHT_MEAL_SUCCESS_HANDLED',
-			failureHandled: 'SELECT_FLIGHT_MEAL_FAILURE_HANDLED',
 		},
 	},
 }
@@ -57,6 +49,8 @@ const FlightService = {
 	getFlights: () => ({res: ['To Las Canarias', 'To Aruba']}),
 	//getLocations: () => ({error: ['Something Happened :(']}),
 }
+
+// ------------------------------------ OPERATIONS ----------------------------------------------------
 
 export function * flightEditionOperation (action) {
 	const {FLIGHT_EDITION} = OPERATIONS
@@ -90,7 +84,7 @@ export function * mealSelectionOperation (context) {
 			put({type: 'failure_operation', payload: {context, operation: name, error}}),
 		updateState: (step, payload = {}) => put(builder(name, context)(step, payload)),
 	}
-	yield call(mealSelection, {name: name, steps, operation})
+	yield call(mealSelection, {name: name, steps, operation, context})
 }
 
 export function * dateEditionOperation (context) {
@@ -102,15 +96,14 @@ export function * dateEditionOperation (context) {
 			type: 'start_operation',
 			payload: {operation: name, step: steps.INITIAL, state: {}, context},
 		}),
-		success: () => put({
-			type: 'success_operation', payload: {context, operation: name},
-		}),
 		failure: (error) =>
 			put({type: 'failure_operation', payload: {context, operation: name, error}}),
 		updateState: (step, payload = {}) => put(builder(name, context)(step, payload)),
 	}
-	yield call(dateEdition, {name: name, steps, operation})
+	yield call(dateEdition, {name: name, steps, operation, context})
 }
+
+// ------------------------------------ SAGAS ----------------------------------------------------
 
 function * flightEdition ({name, steps, operation}) {
 	const userDecisionOption = steps.EDIT_FLIGHT_DECISION
@@ -137,7 +130,7 @@ function * flightEdition ({name, steps, operation}) {
 	}
 }
 
-function * mealSelection ({steps, operation}) {
+function * mealSelection ({steps, operation, name, context}) {
 	try {
 		yield operation.start()
 		yield operation.updateState(steps.SELECT_FLIGHT_MEAL)
@@ -145,21 +138,28 @@ function * mealSelection ({steps, operation}) {
 		yield operation.updateState(steps.SELECT_FLIGHT_MEAL_CONFIRMATION)
 		yield take(steps.SELECT_FLIGHT_MEAL_CONFIRMATION)
 		yield operation.success()
-	} catch (error) {
+		yield take(steps.SELECT_FLIGHT_MEAL_SUCCESS_HANDLED)
+		return yield put({type: 'clean_success_operation', payload: {context, operation: name}})
+} catch (error) {
 		yield operation.failure({error: 'UNHANDLED ERROR !!!!'})
+		yield take(steps.SELECT_FLIGHT_MEAL_FAILURE_HANDLED)
+		return yield put({type: 'clean_failure_operation', payload: {context, operation: name}})
 	}
 }
 
-function * dateEdition ({operation, steps}) {
+function * dateEdition ({operation, steps, context, name}) {
 	try {
 		yield operation.start()
 		yield operation.updateState(steps.SELECT_NEW_DATE)
 		yield take(steps.SELECT_NEW_DATE)
-
 		yield operation.updateState(steps.EDITION_CONFIRMATION)
 		yield take(steps.EDITION_CONFIRMATION)
 		yield operation.success()
+		yield take(steps.EDIT_FLIGHT_DATE_SUCCESS_HANDLED)
+		return yield put({type: 'clean_success_operation', payload: {context, operation: name}})
 	} catch (error) {
 		yield operation.failure({error: 'UNHANDLED ERROR !!!!'})
+		yield take(steps.EDIT_FLIGHT_DATE_FAILURE_HANDLED)
+		return yield put({type: 'clean_failure_operation', payload: {context, operation: name}})
 	}
 }
