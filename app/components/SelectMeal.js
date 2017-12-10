@@ -6,7 +6,6 @@ import './style.css'
 const SelectMeal = props => {
 	const {operation, actions, step, steps, triggerAction, succeed} = props
 	const {SELECT_FLIGHT_MEAL,	SELECT_FLIGHT_MEAL_CONFIRMATION} = steps
-	console.log(props)
 	return (
 		<div className='select-flight-meal mug'>
 			{
