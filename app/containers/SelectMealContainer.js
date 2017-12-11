@@ -7,8 +7,6 @@ import SelectMeal from '../components/SelectMeal'
 
 class SelectMealContainer extends React.PureComponent {
 	render () {
-		console.log('SelectMealContainer')
-		console.log(this.props)
 		const {id, dispatch} = this.props
 		return (
 			<SelectMeal triggerAction={triggerAction(id, dispatch)} {...this.props.mealSelection}/>
@@ -25,6 +23,8 @@ SelectMealContainer.propTypes = {
 
 const mapStateToProps = (state, props) => {
 	const {id, context} = props
+	console.log('id', id)
+	console.log('context', context)
 	return {
 		mealSelection: {
 			...getOperationInfo(id, OPERATIONS.SELECT_FLIGHT_MEAL.name, state.operations, context),

@@ -10,15 +10,6 @@ class FlightEditionContainer extends React.Component {
 	render () {
 		const {dispatch} = this.props
 		const {FLIGHT_EDITION} = OPERATIONS
-
-		/*  {flightComponent}
-		 const flightComponent = <Flights
-		 BOOK_FLIGHT={BOOK_FLIGHT}
-		 {...this.props.bookFlight}
-		 triggerAction={triggerAction(dispatch)}/>
-
-		 <FlowTreeGraph step={or(this.props.bookFlight.step, '')} steps={BOOK_FLIGHT.steps}/>
-		 */
 		const id = this.props.id
 		return (
 			<div>

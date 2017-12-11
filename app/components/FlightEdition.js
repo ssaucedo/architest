@@ -48,11 +48,20 @@ export const FlightEdition = props => {
 					{
 						equals(step, SELECT_FLIGHT_MEAL_OPERATION) &&
 						<div>
+							<div>
 							{
 								Object.keys(children.inProgress).map((cid, ckey) =>
 									<SelectMealContainer key={ckey} id={cid} context={[id]}/>
 								)
 							}
+							</div>
+							<div>
+								{
+									Object.keys(children.succeed).map((cid, ckey) =>
+										<SelectMealContainer key={ckey} id={cid} context={[id]}/>
+									)
+								}
+							</div>
 						</div>
 					}
 					{ inProgress &&
