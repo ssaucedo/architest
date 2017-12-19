@@ -1,7 +1,7 @@
 .commands-container {
-	padding: 10%;
+	padding: 1%;
 	text-align: center;
-	margin: 8% 9% 3% 9%;
+	margin: 0% 2% 3% 2%;
 }
 
 .commands {
@@ -15,7 +15,7 @@
 }
 
 .cancel {
-	padding: 4%;
+	padding: 1%;
 }
 
 .select-flight-meal {

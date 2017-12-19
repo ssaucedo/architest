@@ -1,6 +1,5 @@
-import { call, cancel, put, take, fork } from 'redux-saga/effects'
+import { call, put, take } from 'redux-saga/effects'
 import {builder} from '../../operations/opsSaga'
-import {dateEditionOperation, mealSelectionOperation} from './privateOperations'
 
 export const OPERATIONS = {
 	BOOK_FLIGHT: {
@@ -101,79 +100,7 @@ export function* bookFlight () {
 	}
 }
 
-export function* editFlight () {
-	try {
-		const {FLIGHT_EDITION} = OPERATIONS
-		const {steps} = FLIGHT_EDITION
-		const userDecisionOption = steps.EDIT_FLIGHT_DECISION
-		const updateState = builder(FLIGHT_EDITION.name, [])
-
-		const flights = yield call(FlightService.getFlights)
-		if (flights.error) {
-			return yield put({type: FLIGHT_EDITION.actions.failure, payload: {error: flights.error}})
-		}
-		yield put(updateState(steps.SELECT_FLIGHT, {flights: flights.res}))
-		yield take(steps.SELECT_FLIGHT)
-		yield put(updateState(steps.SELECT_OPERATION, {}))
-		while (true) {
-			const decision = yield take(Object.keys(userDecisionOption))
-			yield put(updateState(decision.type, {}))
-			const context = [FLIGHT_EDITION.name]
-			if (decision.type === userDecisionOption.EDIT_FLIGHT_DATE_OPERATION) {
-				yield dateEditionOperation(context)
-			}
-			if (decision.type === userDecisionOption.SELECT_FLIGHT_MEAL_OPERATION) {
-				yield mealSelectionOperation(context)
-			}
-			yield put(updateState(steps.SELECT_OPERATION, {}))
-		}
-
-		// yield put({type: actions.success, payload: {}})
-	} catch (error) {
-		yield put({type: OPERATIONS.FLIGHT_EDITION.actions.failure, payload: {error: 'UNHANDLED ERROR !!!!'}})
-	}
-}
-
-export function * dateEdition (context) {
-	try {
-		const {EDIT_FLIGHT_DATE} = OPERATIONS
-		const updateState = builder(EDIT_FLIGHT_DATE.name, context)
-		const {steps} = EDIT_FLIGHT_DATE
-
-		yield put(updateState(steps.SELECT_NEW_DATE, {}))
-		yield take(steps.SELECT_NEW_DATE)
-
-		yield put(updateState(steps.EDITION_CONFIRMATION, {}))
-		yield take(steps.EDITION_CONFIRMATION)
-		yield put({type: EDIT_FLIGHT_DATE.actions.success, payload: {}})
-	} catch (error) {
-		yield put({type: OPERATIONS.EDIT_FLIGHT_DATE.actions.failure, payload: {error: 'UNHANDLED ERROR !!!!'}})
-	}
-}
-
-export function * mealSelection (context) {
-	try {
-		const {SELECT_FLIGHT_MEAL} = OPERATIONS
-		const updateState = builder(SELECT_FLIGHT_MEAL.name, context)
-		const {steps} = SELECT_FLIGHT_MEAL
-
-		yield put(updateState(steps.SELECT_FLIGHT_MEAL, {}))
-		yield take(steps.SELECT_FLIGHT_MEAL)
-
-		yield put(updateState(steps.SELECT_FLIGHT_MEAL_CONFIRMATION, {}))
-		yield take(steps.SELECT_FLIGHT_MEAL_CONFIRMATION)
-		yield put({type: SELECT_FLIGHT_MEAL.actions.success, payload: {}})
-	} catch (error) {
-		yield put({type: OPERATIONS.SELECT_FLIGHT_MEAL.actions.failure, payload: {error: 'UNHANDLED ERROR !!!!'}})
-	}
-}
-
 const LocationService = {
 	getLocations: () => ({res: ['Awesome Places', 'Awesome Locations']}),
-	//getLocations: () => ({error: ['Something Happened :(']}),
-}
-
-const FlightService = {
-	getFlights: () => ({res: ['To Las Canarias', 'To Aruba']}),
 	//getLocations: () => ({error: ['Something Happened :(']}),
 }

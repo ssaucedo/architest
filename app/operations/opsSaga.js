@@ -24,10 +24,11 @@ export function* operationFLow (flow, operationName, actions, steps, context = [
 	}
 }
 
-export const builder = (operation, context = []) => (step, state) => {
+export const builder = (operation, context = []) => (id, step, state) => {
 	return {
 		type: 'update_operation_state',
 		payload: {
+			id,
 			context,
 			operation,
 			state,

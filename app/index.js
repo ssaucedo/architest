@@ -4,7 +4,8 @@ import React from 'react'
 import { Provider } from 'react-redux'
 import ReactDOM from 'react-dom'
 import store from './generics/store'
-import FlightEditionContainer from './containers/FlightEditionContainer'
+// import FlightEditionContainer from './containers/FlightEditionContainer'
+import OperationsContainer from './containers/OperationsContainer'
 
 /*
  * If given more time, this should be separated into different
@@ -14,7 +15,7 @@ class App extends React.PureComponent {
 	render () {
 		return (
 			<div>
-				<FlightEditionContainer/>
+				<OperationsContainer/>
 			</div>
 		)
 	}

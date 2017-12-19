@@ -5,16 +5,6 @@ import { head, tail, isEmpty } from 'ramda'
 import 'react-tree-graph/dist/style.css'
 import './style.css'
 
-const data = {
-	name: 'Parent',
-	children: [{
-		name: 'Child One',
-		children: [{
-			name: 'Child Two',
-		}],
-	}],
-}
-
 const buildData = (steps, currentStep) => {
 	return !isEmpty(tail(steps)) ? {
 		name: head(steps),

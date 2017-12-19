@@ -7,23 +7,27 @@ import SelectMeal from '../components/SelectMeal'
 
 class SelectMealContainer extends React.PureComponent {
 	render () {
-		const {dispatch} = this.props
+		const {id, dispatch} = this.props
 		return (
-			<SelectMeal triggerAction={triggerAction(dispatch)} {...this.props.mealSelection}/>
+			<SelectMeal triggerAction={triggerAction(id, dispatch)} {...this.props.mealSelection}/>
 		)
 	}
 }
 
 SelectMealContainer.propTypes = {
+	id: PropTypes.string.isRequired,
 	dispatch: PropTypes.func.isRequired,
 	context: PropTypes.array,
 	mealSelection: PropTypes.object,
 }
 
-const mapStateToProps = ({operations}, props) => {
+const mapStateToProps = (state, props) => {
+	const {id, context} = props
+	console.log('id', id)
+	console.log('context', context)
 	return {
 		mealSelection: {
-			...getOperationInfo(OPERATIONS.SELECT_FLIGHT_MEAL.name, operations, props.context),
+			...getOperationInfo(id, OPERATIONS.SELECT_FLIGHT_MEAL.name, state.operations, context),
 		},
 	}
 }

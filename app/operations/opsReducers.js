@@ -20,12 +20,12 @@ export const getRoute = (context) => {
  * @param action
  * @return {*}
  */
-function operationsReducers (state = {}, action) {
+function operationsReducers (state = stateObject, action) {
 	const {type, payload} = action
 	switch (type) {
 
 		case 'start_operation' : {
-			const {context, operation} = payload
+			const {id, context, operation} = payload
 			const route = getRoute(context)
 			return assocPath(
 				[...route],
@@ -34,14 +34,14 @@ function operationsReducers (state = {}, action) {
 					...path(route, state),
 					inProgress: {
 						...path([...route, 'inProgress'], state),
-						[operation]: {state: payload.state, step: payload.step},
+						[id]: {id, type: operation, state: payload.state, step: payload.step},
 					},
 				},
 				state)
 		}
 
 		case 'update_operation_state': {
-			const {context, operation} = payload
+			const {id, context, operation} = payload
 			const route = getRoute(context)
 			return assocPath(
 				[...route],
@@ -50,14 +50,14 @@ function operationsReducers (state = {}, action) {
 					...path(route, state),
 					inProgress: {
 						...path([...route, 'inProgress'], state),
-						[operation]: {state: payload.state, step: payload.step},
+						[id]: {id, type: operation, state: payload.state, step: payload.step},
 					},
 				},
 				state)
 		}
 
 		case 'success_operation' : {
-			const {context, operation} = payload
+			const {id, context} = payload
 			const route = getRoute(context)
 			return assocPath(
 				[...route],
@@ -65,18 +65,18 @@ function operationsReducers (state = {}, action) {
 					...stateObject,
 					...path(route, state),
 					inProgress: {
-						...omit(operation, path([...route, 'inProgress'], state)),
+						...omit(id, path([...route, 'inProgress'], state)),
 					},
 					succeed: {
 						...path([...route, 'succeed'], state),
-						[operation]: path([...route, 'inProgress', operation], state),
+						[id]: path([...route, 'inProgress', id], state),
 					},
 				},
 				state)
 		}
 
 		case 'failure_operation': {
-			const {context, operation} = payload
+			const {id, context} = payload
 			const route = getRoute(context)
 			return assocPath(
 				[...route],
@@ -84,11 +84,11 @@ function operationsReducers (state = {}, action) {
 					...stateObject,
 					...path(route, state),
 					inProgress: {
-						...omit(operation, path([...route, 'inProgress'], state)),
+						...omit(id, path([...route, 'inProgress'], state)),
 					},
 					failed: {
 						...path([...route, 'failed'], state),
-						[operation]: path([...route, 'inProgress', operation], state),
+						[id]: path([...route, 'inProgress', id], state),
 					},
 				},
 				state)

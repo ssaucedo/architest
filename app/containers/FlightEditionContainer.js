@@ -10,21 +10,15 @@ class FlightEditionContainer extends React.Component {
 	render () {
 		const {dispatch} = this.props
 		const {FLIGHT_EDITION} = OPERATIONS
-
-		/*  {flightComponent}
-		 const flightComponent = <Flights
-		 BOOK_FLIGHT={BOOK_FLIGHT}
-		 {...this.props.bookFlight}
-		 triggerAction={triggerAction(dispatch)}/>
-
-		 <FlowTreeGraph step={or(this.props.bookFlight.step, '')} steps={BOOK_FLIGHT.steps}/>
-		 */
+		const id = this.props.id
 		return (
 			<div>
+				<h2>{id}</h2>
 				<FlightEdition
+					id={id}
 					FLIGHT_EDITION={FLIGHT_EDITION}
 					{...this.props.flightEdition}
-					triggerAction={triggerAction(dispatch)}/>
+					triggerAction={triggerAction(id, dispatch)}/>
 			</div>
 		)
 	}
@@ -32,14 +26,7 @@ class FlightEditionContainer extends React.Component {
 
 FlightEditionContainer.propTypes = {
 	dispatch: PropTypes.func.isRequired,
-	bookFlight: PropTypes.shape({
-		operation: PropTypes.object,
-		locations: PropTypes.any,
-		succeed: PropTypes.object,
-		failed: PropTypes.object,
-		step: PropTypes.string,
-		steps: PropTypes.string,
-	}),
+	id: PropTypes.string.isRequired,
 	flightEdition: PropTypes.shape({
 		operation: PropTypes.object,
 		succeed: PropTypes.object,
@@ -50,15 +37,11 @@ FlightEditionContainer.propTypes = {
 
 }
 
-const mapStateToProps = ({operations}) => {
-	const bookFlightOperation = or(or(operations.inProgress, {})[OPERATIONS.BOOK_FLIGHT.name], {})
+const mapStateToProps = (state, props) => {
+	const {id} = props
 	return {
-		bookFlight: {
-			...getOperationInfo(OPERATIONS.BOOK_FLIGHT.name, operations),
-			locations: equals(bookFlightOperation.step, OPERATIONS.BOOK_FLIGHT.steps.SELECT_ORIGIN) ? bookFlightOperation.state.locations : [],
-		},
 		flightEdition: {
-			...getOperationInfo(OPERATIONS.FLIGHT_EDITION.name, operations),
+			...getOperationInfo(id, OPERATIONS.FLIGHT_EDITION.name, state.operations),
 		},
 	}
 }
